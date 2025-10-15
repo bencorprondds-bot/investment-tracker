@@ -91,8 +91,33 @@ class Portfolio:
         positions: Dict[str, Dict[str, float]] = defaultdict(lambda: {"qty": 0.0, "cost": 0.0})
         for txn in self._transactions:
             symbol = txn.symbol.upper()
-            positions[symbol]["qty"] += txn.signed_quantity
-            positions[symbol]["cost"] += txn.cash_flow
+            position = positions[symbol]
+
+            if txn.type.upper() == "BUY":
+                position["qty"] += txn.quantity
+                position["cost"] += txn.quantity * txn.price
+                continue
+
+            # Handle sell transactions by reducing cost basis proportionally.
+            if position["qty"] <= 0:
+                msg = f"Cannot sell shares for {symbol} without an existing position"
+                raise ValueError(msg)
+
+            if txn.quantity > position["qty"] + 1e-9:
+                msg = f"Cannot sell more shares than currently held for {symbol}"
+                raise ValueError(msg)
+
+            average_cost = position["cost"] / position["qty"] if position["qty"] else 0.0
+            reduction = average_cost * txn.quantity
+            position["qty"] -= txn.quantity
+            position["cost"] -= reduction
+
+            # Guard against floating point drift leaving tiny negative remnants.
+            if position["qty"] < 1e-9:
+                position["qty"] = 0.0
+                position["cost"] = 0.0
+            else:
+                position["cost"] = max(position["cost"], 0.0)
 
         holdings: Dict[str, Holding] = {}
         for symbol, values in positions.items():

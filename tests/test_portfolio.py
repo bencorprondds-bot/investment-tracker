@@ -44,9 +44,9 @@ def test_portfolio_summary(sample_transactions: list[Transaction], sample_provid
     assert summary.holdings["TSLA"].quantity == pytest.approx(0.5)
     assert summary.holdings["VTI"].quantity == pytest.approx(10)
 
-    assert summary.total_invested == pytest.approx(3370)
+    assert summary.total_invested == pytest.approx(3420)
     assert summary.market_value == pytest.approx(3599.3, rel=1e-4)
-    assert summary.unrealized_gain == pytest.approx(229.3, rel=1e-4)
+    assert summary.unrealized_gain == pytest.approx(179.3, rel=1e-4)
 
     assert summary.allocation["AAPL"] == pytest.approx(0.3796, abs=5e-4)
     assert summary.allocation["TSLA"] == pytest.approx(0.0347, abs=5e-4)
